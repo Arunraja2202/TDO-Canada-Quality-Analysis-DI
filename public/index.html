@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canada TDO Quality Analysis</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <!-- Favicon: place your Favicon.png inside public/static/images/ -->
+    <link rel="icon" href="/static/images/TDO.ico" type="image/png">
+
+    <style>
+        body, html {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+            overflow-x: hidden;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fffdd0; 
+            color: #333;
+            min-height: 100vh;
+            font-weight: bold;
+            position: relative;
+        }
+
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -1;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        /* Zoomable content container */
+        .zoomable-content {
+            transform-origin: top center;
+            transition: transform 0.2s ease;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 0;
+            box-sizing: border-box;
+        }
+
+        header {
+            text-align: center;
+            padding: 15px 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+        }
+        header h3 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .upload-heading {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0px 20px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 1.5rem;
+            color: #333;
+            text-align: center;
+            z-index: 1;
+        }
+
+        form {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            width: 300px;
+            transition: border-color 0.3s ease;
+            margin-top: 10px;
+        }
+
+        input[type="file"]:focus {
+            border-color: #0056b3;
+            outline: none;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+            background-color: Green; 
+        }
+
+        button:hover {
+            background-color: #66ccff; 
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            height: 90%;
+            justify-content: center;
+            min-height: 50vh; 
+        }
+
+        .error-summary-container {
+            width: auto;
+            padding: 20px; 
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px; 
+            border: 1px solid #ccc; 
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.5s ease; 
+            z-index: 2; 
+            margin-right: 20px; 
+            max-height: 80vh; 
+            overflow-y: auto; 
+        }
+
+        .error-details-container {
+            flex-grow: 1; 
+            padding: 20px; 
+            background: rgba(255, 255, 255, 0.9); 
+            border-radius: 8px; 
+            border: 1px solid #ccc; 
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
+            display: none; 
+            overflow-y: auto; 
+            font-size: 0.85em; 
+            transition: width 0.5s ease; 
+            max-height: 80vh; 
+        }
+
+        .error-details-container.large {
+            width: 90%;
+        }
+
+        table {
+            width: 100%;
+            max-width: 500px; 
+            border-collapse: collapse; 
+            margin: 0 auto; 
+            font-size: 0.85em; 
+            background-color: #f8f9fa; 
+            min-height: 50px; 
+            overflow: visible; 
+        }
+
+        table, th, td {
+            border: 2px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #ffcccc;
+            color: #ff0000;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #ff6666; 
+        }
+
+        .loading {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff;
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #ffffff;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .expandable {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: #f1f1f1;
+            margin: 0px 0;
+            transition: background-color 0.3s;
+        }
+        .highlight {
+            background-color: #4dd2ff; 
+            font-weight: bold; 
+        }
+    
+        .highlight:hover {
+            background-color: #ff6666;
+        }
+    
+        .expandable:hover {
+            background-color: #f0f0f0; 
+        }
+        .tooltip {
+            display: none;
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            white-space: nowrap;
+            z-index: 10;
+            left: 0;
+            top: 100%;
+        }
+        
+        .expandable:hover .tooltip {
+            display: block;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background-color: #ffcccc;
+        }
+
+        #download-btn {
+            display: none;
+            padding: 10px 20px;
+            background-color: #4dd2ff;
+            color: white;
+            border: 1px solid #3498db;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px auto 0;
+            transition: background-color 0.3s ease;
+            display: block;
+        }
+
+        #download-btn:hover {
+            background-color: #66ccff;
+        }
+        .error-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .highlight-column:hover {
+            background-color:#ff6666;
+            color: black;
+        }
+
+        #search-box {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 250px;
+            font-size: 0.85em;
+        }
+        
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 0.9em;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+        }
+        .overlay {
+    pointer-events: none;
+}
+
+        footer.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        footer a {
+            color: #4dd2ff;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            input[type="file"] {
+                width: 90%;
+            }
+
+            .error-summary-container, .error-details-container {
+                width: 100%;
+            }
+            footer {
+                font-size: 0.8em;
+                padding: 8px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+    <!-- Place your Earth.mp4 inside public/static/video/ -->
+    <video id="video-background" autoplay muted loop playsinline preload="metadata">
+        <source src="/static/video/1.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <!-- All zoomable content goes inside this div -->
+    <div class="zoomable-content" id="zoomable-content">
+        <header>
+            <h1>Trade Dimensions Operations</h1>
+            <h3>Canada Quality Analysis</h3>
+        </header>
+
+        <div class="upload-heading">
+            <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
+                <label for="file-upload">Upload & Validate Your Records</label>
+                <input type="file" name="file" id="file-upload" required>
+                <button type="submit">Execute</button>
+            </form>
+        </div>
+        <div class="container">
+            <div class="error-summary-container" id="error-summary" style="display: none;">
+                <table id="summary-table" class="error-table">
+                    <thead>
+                        <tr>
+                            <th>Tab Name</th>
+                            <th>Error Count</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <button id="download-btn">Download Error Report</button>
+            </div>
+
+            <div class="error-details-container" id="detailed-errors">
+                <div class="error-actions">
+                    <button class="back-btn" id="back-btn">Back to Summary</button>
+                    <input type="text" id="search-box" placeholder="Search..." onkeyup="searchErrors()">
+                </div>
+                <h2 class="error-heading" id="error-heading">Detailed Error Information</h2>
+                <div id="error-details-content"></div>
+            </div>
+        </div>
+        
+        <footer id="main-footer">
+            If you encounter any issues, please feel free to contact Arun Raja(Arun.Raja@nielseniq.com)
+        </footer>
+    </div>
+
+    <script>
+        // Zoom functionality
+        let zoomLevel = 1;
+        const ZOOM_STEP = 0.1;
+        const MAX_ZOOM = 1.5;
+        const MIN_ZOOM = 0.8;
+        const zoomableContent = document.getElementById('zoomable-content');
+
+        // Handle Ctrl +/-
+document.addEventListener('keydown', (e) => {
+    const isCtrlOrCmd = e.ctrlKey || e.metaKey; // metaKey = Cmd on Mac
+    if (!isCtrlOrCmd) return;
+
+    // Only prevent default for zoom keys
+    const zoomKeys = ['+', '-', '0', '=']; // '=' because some keyboards use Ctrl+=' for '+'
+    if (!zoomKeys.includes(e.key)) return;
+
+    e.preventDefault();
+
+    switch (e.key) {
+        case '+':
+        case '=':
+            zoomIn();
+            break;
+        case '-':
+            zoomOut();
+            break;
+        case '0':
+            resetZoom();
+            break;
+    }
+});
+
+        function zoomIn() {
+            if (zoomLevel < MAX_ZOOM) {
+                zoomLevel += ZOOM_STEP;
+                applyZoom();
+            }
+        }
+
+        function zoomOut() {
+            if (zoomLevel > MIN_ZOOM) {
+                zoomLevel -= ZOOM_STEP;
+                applyZoom();
+            }
+        }
+
+        function resetZoom() {
+            zoomLevel = 1;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            zoomableContent.style.transform = `scale(${zoomLevel})`;
+        }
+
+        // Original functionality
+        const form = document.querySelector('form');
+        const summaryTableBody = document.querySelector('#summary-table tbody');
+        const errorSummarySection = document.getElementById('error-summary');
+        const detailedErrorSection = document.getElementById('detailed-errors');
+        const errorDetailsContent = document.getElementById('error-details-content');
+        const backBtn = document.getElementById('back-btn');
+        const searchBox = document.getElementById('search-box'); 
+        const footer = document.getElementById('main-footer');
+        let excelFilename = '';
+
+        if (form) {
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+
+                form.style.display = 'none'; 
+                document.querySelector('.upload-heading').style.display = 'none'; 
+
+                const loadingMessage = document.createElement('div');
+                loadingMessage.className = 'loading';
+                loadingMessage.innerText = 'Loading, please wait...';
+                document.body.appendChild(loadingMessage);
+
+                const formData = new FormData(form);
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(result => {
+                        document.body.removeChild(loadingMessage);
+                        errorSummarySection.style.display = 'block'; 
+                        footer.classList.add('hidden'); // Hide footer after execution
+
+                        summaryTableBody.innerHTML = '';
+                        for (let key in result.detailed_errors_html) {
+
+    const errorCountMatch =
+        result.detailed_errors_html[key].match(/<tr>/g) || [];
+
+    // Remove header row count
+    let errorCount = Math.max(0, errorCountMatch.length - 1);
+
+    errorCount = errorCount > 0 ? errorCount : '-';
+
+                            const row = document.createElement('tr');
+                            const categoryCell = document.createElement('td');
+                            categoryCell.className = 'expandable';
+                            categoryCell.setAttribute('data-error', key);
+
+                            const tooltipText = getTooltipText(key);
+                            categoryCell.setAttribute('title', tooltipText);
+
+                            categoryCell.innerHTML = `${key}`;
+                            if (key === 'GeoCode_Quality_Flags','01_06_08_Without_IRT') {
+                                categoryCell.classList.add('highlight-column');
+                            }
+                            row.appendChild(categoryCell);
+                            row.innerHTML += `<td>${errorCount}</td>`;
+
+                            summaryTableBody.appendChild(row);
+                        }
+
+                        excelFilename = result.excel_filename;
+
+                        const categories = document.querySelectorAll('.expandable');
+                        let lastSelectedCategory = null;
+                        categories.forEach(category => {
+                            category.addEventListener('click', function () {
+                                const errorKey = this.getAttribute('data-error');
+
+                                if (lastSelectedCategory) {
+                                    lastSelectedCategory.classList.remove('highlight');
+                                }
+
+                                this.classList.add('highlight');
+                                lastSelectedCategory = this;
+
+                                errorSummarySection.style.marginLeft = "0";
+                                detailedErrorSection.style.display = 'block';
+                                detailedErrorSection.classList.add('large');
+
+                                let detailedContent = result.detailed_errors_html[errorKey];
+                                detailedContent = detailedContent.replace(/(\d+)\.0\b/g, '$1');
+                                detailedContent = detailedContent.replace(/NaN/g, '-');
+
+                                errorDetailsContent.innerHTML = detailedContent;
+                                document.getElementById('error-heading').innerText = errorKey;
+
+                                searchBox.value = ''; 
+                                searchErrors(); 
+                            });
+                        });
+
+                        document.getElementById('download-btn').style.display = 'block';
+                    })
+                    .catch(error => {
+                        document.body.removeChild(loadingMessage);
+                        console.error("Error:", error);
+                        alert("An error occurred during the upload process. Please try again.");
+                    });
+            });
+        }
+
+        backBtn.addEventListener('click', () => {
+            detailedErrorSection.style.display = 'none';
+            errorSummarySection.style.marginLeft = "20px";
+            errorSummarySection.style.display = 'block';
+            detailedErrorSection.classList.remove('large');
+        });
+
+        document.getElementById('download-btn').addEventListener('click', () => {
+            window.open(`/download/${encodeURIComponent(excelFilename)}`, '_blank');
+        });
+
+        function searchErrors() {
+            const query = searchBox.value.toLowerCase();
+            const rows = errorDetailsContent.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+        
+        function getTooltipText(key) {
+            const tooltips = {
+                'GeoCode_Quality_Flags': 'TDLinx with Geocode Quality other than Exact Locations',
+                '01_06_08_Without_IRT': '01 Wholesale Club, 06 Category Killers, and 08 Mass Merchandise Trade Channel records with null IRT in TDLinx.',
+                '93Z_with_OP_TC_NA_FO': 'UV 93Z records with store status as Open Operating, Closed, Future Open, and Inactive.',
+                'NA_Atm_Cnt_Fld_OP_NA_FO': '[NA] Attempted Contact Failed with the store status as Open, Operating, Future Open, or Inactive.',
+                'Non_covered_Pharmacy': 'Trade Channel as [03]Drug Stores and Pharmacies but banner contains Long Term Care, Infusion, Mail Order, Over The Counter, Clinic & Dispensing, Indian Health Services, State Hospital, Institution, HMO, Durable Medical Equipment, Specialty, Compounding',
+                'Null_Food_Type_On_Premise': 'Food Type is null for Bar and Caterers Trade Channel TDLinx',
+                'Non_standardized_Address': 'TDLinx with Address Quality as Non Standardized',
+                'Inactive_Other_than_Spl_Proj': 'Store status as [NA] Inactive, Not Verified, but store verification source other than [34] Special Projects',
+                'UV_other_than_93Z': 'Store status as [UV] Unverifiable, but exception code other than 93Z',
+                'UV_with_Different_Trade': 'Store status as [UV] Unverifiable, but Trade Channel other than [09]Unknown Retailers',
+                'IRT_With_Null_Store_No': 'TDLinx has IRT populated but Store Number field is NULL',
+                'FO_with_Non_Syndicate': 'Store status as [FO] Future Opening, but Trade Channel as [09]Unknown Retailers or [59]Unknown On-Premise',
+                'Incorrect_Banner_Rule': 'TDLinx with Incorrect banner rule, as per our Banner Rule document',
+                'IRT_without_MG': 'TDLinx has IRT populated but MG field is NULL',
+                'Invalid_Verification_Date': 'TDLinx has Verified Store Status Date other than the current date/previous date/next date',
+                'Invalid_94Z_Exception_Code': 'TDLinx having EM MG populated but exception code other than 94Z',
+                'Null_Phone': 'Syndicated TDLinx with store status as OPEN OPERATING but Phone Number field is NULL',
+                'Null_MG': 'Banner name has potential MG available in database',
+                'Banner_with_gas': 'Store Banner has Gas or Fuel, but Gas flag is NULL or NO',
+                '03_With_Pharm_Flag_as_No_&_Null': 'Trade Channel as [03]Drug Stores and Pharmacies, but Pharmacy flag as NULL or NO',
+                'Pet_Trade_with_EM_Banner': 'Trade Channel as [11]Pet, but banner contains Grooming, Day care, Spa, Resort',
+                'Vet_Sub_Trade_with_EM_Banner': 'Trade Sub Channel as [3]Vet Clinic, but banner contains Surgical, Neuter, spay, emergency, mobile, dental',
+                'Farm&Feed_with_EM_Banner': 'Trade Sub Channel as [U]Farm and Feed, but banner contains Grain elevator, agricultural, equipment',
+                'Banner_vs_Alcohol_Flags': 'Store Banner contains Beer, Wine, Liquor, but the alcohol flag is NULL OR NO',
+                'Excl_Banners_For_Pet_Super_str': 'Trade Sub Channel as [1]Pet Super Store, but banner name other than Petco, Unleashed by Petco, Petsmart',
+                '06_11_13_14_BWL_Blank_YES': 'Trade Channel as [06]Category Killers, [11]Pet, [13]Fulfillment, [14]Cannabis but BWL flag other than "NO"',
+                'Incorrect_Vape_Trade_Using_Banner': 'Trade Sub channel as [5]Vape Store but banner contains Pipe, Glass, Bubbler',
+                'Illegal_Cannabis_States': 'TDLinx with State where Cannabis is not allowed to sell in stores',
+                'Cannabis_Medical_States': 'TDLinx with State where Cannabis is not allowed to sell as Recreational and combinational',
+                'State_BWL_Grid': 'TDLinx with incorrect BWL Flag as per BWL state law',
+                'Banner_Name_With_Spl_Proj_Cl_Inter':'If it is a special event or client internal, then the banner name should be special event or client internal.',
+                'Null_Supplier': 'TDLinx having NULL Supplier for [01] Wholesale Club,[03] Drug Stores and Pharmacies,[05]Grocery,[07] Convenience Stores ,[08] Mass Merchandise,[11]Pet',
+                'Incorrect_MG' :'Name Vs MG Name',
+            };
+            return tooltips[key] || 'No details available';
+        }
+    </script>
+</body>
+</html>
