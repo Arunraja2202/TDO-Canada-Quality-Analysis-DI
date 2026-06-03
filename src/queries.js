@@ -202,7 +202,12 @@ function query_irt_requires_mg_local_code(rows) {
     );
   });
 }
-
+function query_pharmacy_flag(rows) {
+  return rows.filter(r =>
+    String(r['Local Trade Channel'] || '').includes('[03] Drug Stores and Pharmacies') &&
+    (val(r, 'Pharmacy') === 'N' || isEmpty(r['Pharmacy']))
+  );
+}
 /** Verification Date validation (YYYYMMDD format) */
 function query_invalid_verification_date(rows) {
     requireCols(rows, REQUIRED_COLS);
@@ -306,7 +311,6 @@ function processCSV(rows) {
   safe('NA_Atm_Cnt_Fld_OP_NA_FO',           () => query_3(rows));
   safe('Invalid_Verification_Source_OP_FO_TC', () => query_4(rows));
   safe('Non_standardized_Address',          () => query_7(rows));
-  safe('Inactive_Other_than_Spl_Proj',      () => query_8(rows));
   safe('UV_other_than_Attmp',               () => query_9(rows));
   safe('UV_other_than_93Z',                 () => Unverifiable_Records(rows));
   safe('UV_with_Different_Trade',           () => Unverifiable_With_Diff_Trade(rows));
